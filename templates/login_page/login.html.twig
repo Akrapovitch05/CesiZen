@@ -1,0 +1,107 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block meta %}
+    <meta name="theme-color" content="#712cf9">
+{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+
+{% block body %}
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            text-align: center;
+        }
+
+        body {
+            display: grid;
+            align-items: center;
+            padding-top: 70px;
+            padding-bottom: 40px;
+            background-image: url("{{ asset('assets/img/bg-masthead.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+
+        .form-signin {
+            position: relative;
+            z-index: 2;
+            max-width: 330px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-signin .form-floating:focus-within {
+            z-index: 2;
+        }
+
+        .form-signin input[type="email"] {
+            margin-bottom: -1px;
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        .form-signin input[type="password"] {
+            margin-bottom: 10px;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+    </style>
+
+    <main class="form-signin w-100 m-auto">
+        <form action="{{ path('app_login') }}" method="post">
+            <img class="mb-4" src="{{ asset('assets/img/cesizenlogo.png') }}" alt="" width="72" height="57">
+            <h1 class="h3 mb-3 fw-normal">Connectez-vous</h1>
+
+            {% if app.user is not null %}
+                <div class="alert alert-info">
+                    Bienvenue {{ app.user.username }}
+                </div>
+            {% endif %}
+
+            {% if error %}
+                <div class="alert alert-danger">
+                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                </div>
+            {% endif %}
+
+            <div class="form-floating">
+                <input type="email" name="_username" class="form-control" id="floatingInput" placeholder="nom@exemple.com" required value="{{ last_username }}">
+                <label for="floatingInput">Adresse email</label>
+            </div>
+
+            <div class="form-floating">
+                <input type="password" name="_password" class="form-control" id="floatingPassword" placeholder="Mot de passe" required>
+                <label for="floatingPassword">Mot de passe</label>
+            </div>
+
+            <div class="checkbox mb-3">
+                <label>
+                    <input type="checkbox" name="_remember_me" value="on"> Se souvenir de moi
+                </label>
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Se connecter</button>
+        </form>
+    </main>
+
+{% endblock %}
