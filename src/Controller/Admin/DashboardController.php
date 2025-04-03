@@ -38,9 +38,10 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Utilisateurs', 'fa fa-users', Utilisateur::class);
         yield MenuItem::linkToCrud('Activités', 'fa fa-running', Activite::class);
         yield MenuItem::linkToCrud('Exercices', 'fa fa-dumbbell', Exercice::class);
-        yield MenuItem::linkToCrud('Émotions', 'fa fa-smile', Emotion::class);
+
         yield MenuItem::linkToCrud('Séances', 'fa fa-calendar', Seance::class);
-        yield MenuItem::linkToCrud('Diagnostics', 'fa fa-notes-medical', Diagnostic::class);
+
+
     }
 
     // Corrected configureUserMenu method

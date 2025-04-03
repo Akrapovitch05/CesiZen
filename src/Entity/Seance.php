@@ -2,38 +2,51 @@
 
 namespace App\Entity;
 
-use App\Repository\SeanceRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
-#[ORM\Entity(repositoryClass: SeanceRepository::class)]
+#[ORM\Entity]
 class Seance
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'integer')]
+    private int $id;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $dateRealisation = null;
+    private \DateTimeInterface $dateRealisation;
 
-    public function getId(): ?int
+    #[ORM\ManyToMany(targetEntity: Exercice::class, inversedBy: 'seances')]
+    #[ORM\JoinTable(name: 'Asso_5')]
+    private Collection $exercices;
+
+    public function __construct()
     {
-        return $this->id;
+        $this->exercices = new ArrayCollection();
     }
 
-    public function getDateRealisation(): ?\DateTimeInterface
+    // Getters et Setters
+    public function getId(): int { return $this->id; }
+    public function getDateRealisation(): \DateTimeInterface { return $this->dateRealisation; }
+    public function setDateRealisation(\DateTimeInterface $date): self { $this->dateRealisation = $date; return $this; }
+    public function getExercices(): Collection { return $this->exercices; }
+    public function addExercice(Exercice $exercice): self { $this->exercices[] = $exercice; return $this; }
+    public function removeExercice(Exercice $exercice): self { $this->exercices->removeElement($exercice); return $this; }
+    public function getExercice(): ArrayCollection|Collection
     {
-        return $this->dateRealisation;
+        return $this->exercices;
     }
-
-    public function setDateRealisation(\DateTimeInterface $dateRealisation): self
+    public function setExercice(ArrayCollection|Collection $exercices): self
     {
-        $this->dateRealisation = $dateRealisation;
+        $this->exercices = $exercices;
         return $this;
     }
-    public function __toString(): string
+    public function setExercices(ArrayCollection|Collection $exercices): self
     {
-        return $this->getDateRealisation()->format('Y-m-d'); // Ou un autre champ pertinent
+        $this->exercices = $exercices;
+        return $this;
     }
+
 
 }

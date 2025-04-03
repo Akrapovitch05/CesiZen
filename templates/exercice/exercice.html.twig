@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Exercices de Respiration{% endblock %}
+
+{% block body %}
+    <!-- Header -->
+    <header class="masthead bg-primary text-white text-center">
+        <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
+            <div class="d-flex justify-content-center">
+                <div class="text-center">
+                    <h1 class="mx-auto my-0 text-uppercase">Exercices de Respiration</h1>
+                    <h2 class="text-white-50 mx-auto mt-2 mb-5">Choisissez un exercice pour commencer</h2>
+                    <a class="btn btn-light" href="{{ path('app_home') }}">Retourner au site</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Liste des Exercices -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Liste des Exercices</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            {% for exercice in exercices %}
+                                <li class="mb-3">
+                                    <strong>{{ exercice.nom }}</strong> -
+                                    <em>{{ exercice.dureeInspiration }}s inspiration,
+                                        {{ exercice.dureeApnee }}s apnée,
+                                        {{ exercice.dureeExpiration }}s expiration</em>
+                                    <br>
+                                    <a href="{{ path('app_exercice_show', { id: exercice.id }) }}" class="btn btn-success btn-sm mt-2">Démarrer</a>
+                                </li>
+                            {% else %}
+                                <p>Aucun exercice disponible.</p>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3">
+        <p>© 2025 CesiZen - Tous droits réservés</p>
+    </footer>
+{% endblock %}

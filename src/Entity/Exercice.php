@@ -2,89 +2,62 @@
 
 namespace App\Entity;
 
-use App\Repository\ExerciceRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
-#[ORM\Entity(repositoryClass: ExerciceRepository::class)]
+#[ORM\Entity]
 class Exercice
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'integer')]
+    private int $id;
 
-    #[ORM\Column(length: 50)]
-    private ?string $nom = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    private string $nom;
 
     #[ORM\Column(type: 'integer')]
-    private ?int $dureeInspiration = null;
+    private int $dureeInspiration;
 
     #[ORM\Column(type: 'integer')]
-    private ?int $dureeApnee = null;
+    private int $dureeApnee;
 
     #[ORM\Column(type: 'integer')]
-    private ?int $dureeExpiration = null;
+    private int $dureeExpiration;
 
-    #[ORM\Column(length: 255)]
-    private ?string $description = null;
+    #[ORM\Column(type: 'string', length: 255)]
+    private string $description;
 
-    public function getId(): ?int
+    #[ORM\ManyToMany(targetEntity: Seance::class, mappedBy: 'exercices')]
+    private Collection $seances;
+
+    #[ORM\ManyToMany(targetEntity: Activite::class, mappedBy: 'exercices')]
+    private Collection $activites;
+    
+
+    public function __construct()
     {
-        return $this->id;
+        $this->seances = new ArrayCollection();
+        $this->activites = new ArrayCollection();
     }
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(string $nom): self
-    {
-        $this->nom = $nom;
-        return $this;
-    }
-
-    public function getDureeInspiration(): ?int
-    {
-        return $this->dureeInspiration;
-    }
-
-    public function setDureeInspiration(int $dureeInspiration): self
-    {
-        $this->dureeInspiration = $dureeInspiration;
-        return $this;
-    }
-
-    public function getDureeApnee(): ?int
-    {
-        return $this->dureeApnee;
-    }
-
-    public function setDureeApnee(int $dureeApnee): self
-    {
-        $this->dureeApnee = $dureeApnee;
-        return $this;
-    }
-
-    public function getDureeExpiration(): ?string
-    {
-        return $this->dureeExpiration;
-    }
-
-    public function setDureeExpiration(string $dureeExpiration): self
-    {
-        $this->dureeExpiration = $dureeExpiration;
-        return $this;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(string $description): self
-    {
-        $this->description = $description;
-        return $this;
-    }
+    // Getters et Setters
+    public function getId(): int { return $this->id; }
+    public function getNom(): string { return $this->nom; }
+    public function setNom(string $nom): self { $this->nom = $nom; return $this; }
+    public function getDureeInspiration(): int { return $this->dureeInspiration; }
+    public function setDureeInspiration(int $duree): self { $this->dureeInspiration = $duree; return $this; }
+    public function getDureeApnee(): int { return $this->dureeApnee; }
+    public function setDureeApnee(int $duree): self { $this->dureeApnee = $duree; return $this; }
+    public function getDureeExpiration(): int { return $this->dureeExpiration; }
+    public function setDureeExpiration(int $duree): self { $this->dureeExpiration = $duree; return $this; }
+    public function getDescription(): string { return $this->description; }
+    public function setDescription(string $description): self { $this->description = $description; return $this; }
+    public function getSeances(): Collection { return $this->seances; }
+    public function addSeance(Seance $seance): self { $this->seances[] = $seance; return $this; }
+    public function removeSeance(Seance $seance): self { $this->seances->removeElement($seance); return $this; }
+    public function getActivites(): Collection { return $this->activites; }
+    public function addActivite(Activite $activite): self { $this->activites[] = $activite; return $this; }
+    public function removeActivite(Activite $activite): self { $this->activites->removeElement($activite); return $this; }
 }

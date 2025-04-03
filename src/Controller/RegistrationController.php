@@ -3,10 +3,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Diagnostic;
 use App\Entity\Seance;
-use App\Entity\TrackerEmotion;
 use App\Entity\Utilisateur;
+use App\Entity\Activite;
 use App\Form\RegistrationType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,20 +32,21 @@ class RegistrationController extends AbstractController
             $user->setDateInscription(new \DateTime());
             // Ajouter un rôle par défaut (ROLE_USER)
             $user->setRoles(['ROLE_USER']);
-            $defaultTracker = $entityManager->getRepository(TrackerEmotion::class)->find(1); // ID d’un tracker par défaut
-            $user->setTracker($defaultTracker);
+
+            // Assigner une séance par défaut à l'utilisateur (si elle existe)
             $defaultSeance = $entityManager->getRepository(Seance::class)->find(1);
             if (!$defaultSeance) {
                 throw new \Exception("Aucune séance par défaut trouvée ! Ajoutez-en une dans la base.");
             }
             $user->setSeance($defaultSeance);
-            $defaultDiagnostic = $entityManager->getRepository(Diagnostic::class)->find(1);
-            if (!$defaultDiagnostic) {
-                throw new \Exception("Aucun diagnostic par défaut trouvé ! Ajoutez-en un dans la base.");
+
+            // Assigner des activités par défaut à l'utilisateur
+            $activite1 = $entityManager->getRepository(Activite::class)->find(1); // ID d'une activité par défaut
+            if ($activite1) {
+                $user->addActivite($activite1);
+            } else {
+                throw new \Exception("Aucune activité par défaut trouvée ! Ajoutez-en une dans la base.");
             }
-            $user->setDiagnostic($defaultDiagnostic);
-
-
 
             // Sauvegarder l'utilisateur
             $entityManager->persist($user);

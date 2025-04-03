@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ exercice.nom }}{% endblock %}
+
+{% block body %}
+    <header class="masthead bg-primary text-white text-center">
+        <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
+            <div class="d-flex justify-content-center">
+                <div class="text-center">
+                    <h1 class="mx-auto my-0 text-uppercase">{{ exercice.nom }}</h1>
+                    <h2 class="text-white-50 mx-auto mt-2 mb-5">{{ exercice.description }}</h2>
+                    <a class="btn btn-light" href="{{ path('app_exercices') }}">Retour aux exercices</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mt-5 text-center">
+        <h3 class="mb-4">Suivez le rythme :</h3>
+        <p>Inspiration : <strong>{{ exercice.dureeInspiration }}s</strong> -
+            Apnée : <strong>{{ exercice.dureeApnee }}s</strong> -
+            Expiration : <strong>{{ exercice.dureeExpiration }}s</strong></p>
+
+        <!-- Animation -->
+        <div id="circle" class="breath-circle"></div>
+
+        <button class="btn btn-primary mt-4" onclick="startBreathing()">Démarrer l'exercice</button>
+    </div>
+
+    <script>
+        function startBreathing() {
+            const inspiration = {{ exercice.dureeInspiration }} * 1000;
+            const apnee = {{ exercice.dureeApnee }} * 1000;
+            const expiration = {{ exercice.dureeExpiration }} * 1000;
+            const circle = document.getElementById("circle");
+
+            function animateBreathing() {
+                circle.style.transform = "scale(1.5)";
+                setTimeout(() => {
+                    circle.style.transform = "scale(1)";
+                    setTimeout(() => {
+                        circle.style.transform = "scale(0.5)";
+                        setTimeout(() => {
+                            animateBreathing();
+                        }, expiration);
+                    }, apnee);
+                }, inspiration);
+            }
+
+            animateBreathing();
+        }
+    </script>
+
+    <style>
+        .breath-circle {
+            width: 100px;
+            height: 100px;
+            background-color: #007bff;
+            border-radius: 50%;
+            margin: 20px auto;
+            transition: transform 3s ease-in-out;
+        }
+    </style>
+
+    <footer class="bg-dark text-white text-center py-3">
+        <p>© 2025 CesiZen - Tous droits réservés</p>
+    </footer>
+{% endblock %}

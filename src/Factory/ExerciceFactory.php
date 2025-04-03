@@ -3,53 +3,19 @@
 namespace App\Factory;
 
 use App\Entity\Exercice;
-use App\Repository\ExerciceRepository;
-use Doctrine\ORM\EntityRepository;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
-use Zenstruck\Foundry\Persistence\Proxy;
-use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
+use Zenstruck\Foundry\ModelFactory;
 
-/**
- * @extends PersistentProxyObjectFactory<Exercice>
- */
-final class ExerciceFactory extends PersistentProxyObjectFactory{
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
-     *
-     * @todo inject services if required
-     */
-    public function __construct()
-    {
-    }
-
-    public static function class(): string
-    {
-        return Exercice::class;
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
-     *
-     * @todo add your default values here
-     */
-    protected function defaults(): array|callable
+/** @extends ModelFactory<Exercice> */
+final class ExerciceFactory extends ModelFactory
+{
+    protected function getDefaults(): array
     {
         return [
-            'description' => self::faker()->text(255),
-            'dureeApnee' => self::faker()->randomNumber(),
-            'dureeExpiration' => self::faker()->randomNumber(),
-            'dureeInspiration' => self::faker()->randomNumber(),
-            'nom' => self::faker()->text(50),
+            'nom' => self::faker()->word(),
+            'dureeInspiration' => self::faker()->numberBetween(3, 10),
+            'dureeApnee' => self::faker()->numberBetween(0, 5),
+            'dureeExpiration' => self::faker()->numberBetween(3, 10),
+            'description' => self::faker()->sentence(),
         ];
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
-     */
-    protected function initialize(): static
-    {
-        return $this
-            // ->afterInstantiate(function(Exercice $exercice): void {})
-        ;
     }
 }

@@ -3,55 +3,20 @@
 namespace App\Factory;
 
 use App\Entity\Utilisateur;
-use App\Repository\UtilisateurRepository;
-use Doctrine\ORM\EntityRepository;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Zenstruck\Foundry\ModelFactory;
 
-/**
- * @extends PersistentProxyObjectFactory<Utilisateur>
- */
-final class UtilisateurFactory extends PersistentProxyObjectFactory
+/** @extends ModelFactory<Utilisateur> */
+final class UtilisateurFactory extends ModelFactory
 {
-    private UserPasswordHasherInterface $passwordHasher;
-
-    public function __construct(UserPasswordHasherInterface $passwordHasher)
-    {
-        $this->passwordHasher = $passwordHasher;
-    }
-
-    public static function class(): string
-    {
-        return Utilisateur::class;
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
-     *
-     * @todo add your default values here
-     */
-    protected function defaults(): array|callable
+    protected function getDefaults(): array
     {
         return [
-            'dateInscription' => self::faker()->dateTime(),
-            'diagnostic' => DiagnosticFactory::new(),
-            'email' => self::faker()->email(),
-            'password' => $this->passwordHasher->hashPassword(new Utilisateur(), 'password'), // Hachage du mot de passe
-            'nom' => self::faker()->word(),
-            'prenom' => self::faker()->word(),
-            'seance' => SeanceFactory::new(),
-            'tracker' => TrackerEmotionFactory::new(),
-            'roles' => self::faker()->randomElement([['ROLE_USER'], ['ROLE_ADMIN'], []]), // Anonyme, User ou Admin
+            'nom' => self::faker()->lastName(),
+            'prenom' => self::faker()->firstName(),
+            'email' => self::faker()->unique()->email(),
+            'password' => 'password',
+            'dateInscription' => self::faker()->dateTimeBetween('-2 years', 'now'),
+            'roles' => 'ROLE_USER',
         ];
-    }
-
-    /**
-     * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
-     */
-    protected function initialize(): static
-    {
-        return $this
-            // ->afterInstantiate(function(Utilisateur $utilisateur): void {})
-            ;
     }
 }

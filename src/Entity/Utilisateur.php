@@ -1,164 +1,156 @@
 <?php
+// src/Entity/Utilisateur.php
 
 namespace App\Entity;
 
-use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-#[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
-class Utilisateur implements UserInterface,\Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface
+#[ORM\Entity]
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'integer')]
+    private int $id;
 
-    #[ORM\Column(length: 50)]
-    private ?string $nom = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    private string $nom;
 
-    #[ORM\Column(length: 50)]
-    private ?string $prenom = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    private string $prenom;
 
-    #[ORM\Column(length: 50, unique: true)]
-    private ?string $email = null;
+    #[ORM\Column(type: 'string', length: 50, unique: true)]
+    private string $email;
 
-    #[ORM\Column(length: 255)]
-    private ?string $password = null;
+    #[ORM\Column(type: 'string', length: 255)]
+    private string $password;
 
     #[ORM\Column(type: 'date')]
-    private ?\DateTimeInterface $dateInscription = null;
+    private \DateTimeInterface $dateInscription;
 
-    #[ORM\ManyToOne(targetEntity: TrackerEmotion::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?TrackerEmotion $tracker = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    private string $roles;
 
     #[ORM\ManyToOne(targetEntity: Seance::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: 'id_seance', referencedColumnName: 'id', onDelete: 'SET NULL')]
     private ?Seance $seance = null;
 
-    #[ORM\ManyToOne(targetEntity: Diagnostic::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Diagnostic $diagnostic = null;
+    #[ORM\ManyToMany(targetEntity: Activite::class, inversedBy: 'utilisateurs')]
+    #[ORM\JoinTable(name: 'Asso_7')]
+    private Collection $activites;
 
-    #[ORM\Column(type: 'json')]
-    private array $roles = []; // Modification : 'roles' est maintenant un tableau (array)
 
-    public function getId(): ?int
+
+    public function __construct()
+    {
+        $this->activites = new ArrayCollection();
+        $this->dateInscription = new \DateTime();
+    }
+    public function getId(): int
     {
         return $this->id;
     }
-
-    public function getNom(): ?string
+    public function setId(int $id): self
     {
-        return $this->nom;
+        $this->id = $id;
+        return $this;
     }
-
-    public function setNom(string $nom): static
+    public function getUsername(): string
+    {
+        return $this->email;
+    }
+    public function setNom(string $nom): self
     {
         $this->nom = $nom;
         return $this;
     }
-
-    public function getPrenom(): ?string
-    {
-        return $this->prenom;
-    }
-
-    public function setPrenom(string $prenom): static
+    public function setPrenom(string $prenom): self
     {
         $this->prenom = $prenom;
         return $this;
     }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): static
+    public function setEmail(string $email): self
     {
         $this->email = $email;
         return $this;
     }
-
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): static
+    public function setPassword(string $password): self
     {
         $this->password = $password;
         return $this;
     }
-
-    public function getDateInscription(): ?\DateTimeInterface
-    {
-        return $this->dateInscription;
-    }
-
-    public function setDateInscription(\DateTime $dateInscription): self
+    public function setDateInscription(\DateTimeInterface $dateInscription): self
     {
         $this->dateInscription = $dateInscription;
         return $this;
     }
-
-    // Getter et Setter pour 'diagnostic' (relation avec Diagnostic)
-    public function getDiagnostic(): ?Diagnostic
+    public function setRoles(array $roles): self
     {
-        return $this->diagnostic;
-    }
-
-    public function setDiagnostic(?Diagnostic $diagnostic): static
-    {
-        $this->diagnostic = $diagnostic;
+        $this->roles = $roles[0];
         return $this;
     }
-
-    // Getter et Setter pour 'seance' (relation avec Seance)
-    public function getSeance(): ?Seance
-    {
-        return $this->seance;
-    }
-
-    public function setSeance(?Seance $seance): static
+    public function setSeance(?Seance $seance): self
     {
         $this->seance = $seance;
         return $this;
     }
-
-    // Getter et Setter pour 'tracker' (relation avec TrackerEmotion)
-    public function getTracker(): ?TrackerEmotion
+    public function getNom(): string
     {
-        return $this->tracker;
+        return $this->nom;
+    }
+    public function getPrenom(): string
+    {
+        return $this->prenom;
+    }
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+    public function getDateInscription(): \DateTimeInterface
+    {
+        return $this->dateInscription;
+    }
+    public function getRoles(): array
+    {
+        return [$this->roles];
+    }
+    public function getSeance(): ?Seance
+    {
+        return $this->seance;
+    }
+    public function getActivites(): Collection
+    {
+        return $this->activites;
     }
 
-    public function setTracker(?TrackerEmotion $tracker): static
+    public function addActivite(Activite $activite): self
     {
-        $this->tracker = $tracker;
+        if (!$this->activites->contains($activite)) {
+            $this->activites[] = $activite;
+        }
         return $this;
     }
 
-    public function getRoles(): array
+    public function removeActivite(Activite $activite): self
     {
-        // Assure-toi que chaque utilisateur ait au moins le rôle ROLE_USER
-        $roles = $this->roles;
-        // Assurer que tous les utilisateurs aient au moins un rôle par défaut
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles); // On retourne un tableau de rôles unique
-    }
-
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
+        if ($this->activites->contains($activite)) {
+            $this->activites->removeElement($activite);
+        }
         return $this;
     }
 
     public function eraseCredentials()
     {
         // TODO: Implement eraseCredentials() method.
+        return $this;
     }
 
     public function getUserIdentifier(): string
@@ -166,9 +158,5 @@ class Utilisateur implements UserInterface,\Symfony\Component\Security\Core\User
         // TODO: Implement getUserIdentifier() method.
         return $this->email;
     }
-    public function __construct()
-    {
-        $this->dateInscription = new \DateTime(); // Date et heure actuelles lors de l'instanciation
-    }
-
 }
+

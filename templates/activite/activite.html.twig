@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activités{% endblock %}
+
+{% block body %}
+    <!-- Header -->
+    <header class="masthead bg-primary text-white text-center">
+        <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
+            <div class="d-flex justify-content-center">
+                <div class="text-center">
+                    <h1 class="mx-auto my-0 text-uppercase">Activités</h1>
+                    <h2 class="text-white-50 mx-auto mt-2 mb-5">Choisissez une activité pour commencer</h2>
+                    <a class="btn btn-light" href="{{ path('app_home') }}">Retourner au site</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Liste des Activités -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Liste des Activités</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            {% for activite in activites %}
+                                <li class="mb-4">
+                                    <strong>{{ activite.nom }}</strong>
+                                    <p><em>{{ activite.description }}</em></p>
+                                    <p><strong>Durée :</strong> {{ activite.duree }} minutes</p>
+
+                                    {% if activite.urlMedia %}
+                                        <div class="text-center mb-3">
+                                            {% if activite.urlMedia starts with 'https://www.youtube.com/' %}
+                                                <!-- Embedding YouTube Video -->
+                                                <iframe width="100%" height="315" src="https://www.youtube.com/embed/{{ activite.urlMedia|split('=')|last }}" frameborder="0" allowfullscreen></iframe>
+                                            {% else %}
+                                                <img src="{{ activite.urlMedia }}" alt="Média de {{ activite.nom }}" class="img-fluid rounded">
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    <h6>Exercices associés :</h6>
+                                    <ul>
+                                        {% for exercice in activite.exercices %}
+                                            <li>
+                                                <a href="{{ path('app_exercice_show', { id: exercice.id }) }}" class="btn btn-success btn-sm mt-2">{{ exercice.nom }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li>Aucun exercice disponible.</li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% else %}
+                                <p class="text-center">Aucune activité disponible.</p>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

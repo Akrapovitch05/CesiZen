@@ -3,7 +3,7 @@
 {% block title %}Profil de {{ user.nom }}{% endblock %}
 
 {% block body %}
-    <!-- Masthead-->
+    <!-- Masthead -->
     <header class="masthead bg-primary text-white text-center">
         <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
             <div class="d-flex justify-content-center">
@@ -16,48 +16,95 @@
         </div>
     </header>
 
+    <!-- Contenu principal -->
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="card shadow-lg">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white text-center">
                         <h4>Informations Personnelles</h4>
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled">
+                            <li class="mb-3"><strong>Nom :</strong> {{ user.nom }}</li>
+                            <li class="mb-3"><strong>Prénom :</strong> {{ user.prenom }}</li>
+                            <li class="mb-3"><strong>Email :</strong> {{ user.email }}</li>
+                            <li class="mb-3"><strong>Date d'inscription :</strong> {{ user.dateInscription|date('d-m-Y') }}</li>
                             <li class="mb-3">
-                                <strong>Nom:</strong> {{ user.nom }}
+                                <strong>Rôle :</strong>
+                                <span class="badge {{ 'ROLE_ADMIN' in user.roles ? 'bg-danger' : 'bg-secondary' }}">
+                                    {{ 'ROLE_ADMIN' in user.roles ? 'Administrateur' : 'Utilisateur' }}
+                                </span>
                             </li>
                             <li class="mb-3">
-                                <strong>Prénom:</strong> {{ user.prenom }}
-                            </li>
-                            <li class="mb-3">
-                                <strong>Email:</strong> {{ user.email }}
-                            </li>
-                            <li class="mb-3">
-                                <strong>Date d'inscription:</strong> {{ user.dateInscription|date('d-m-Y') }}
-                            </li>
-                            <li class="mb-3">
-                                <strong>Rôle:</strong> {{ 'ROLE_ADMIN' in user.roles ? 'Administrateur' : 'Utilisateur' }}
-                            </li>
-                            <li class="mb-3">
-                                <strong>Séance:</strong> {{ user.seance ? user.seance.dateRealisation|date('d-m-Y') : 'Aucune séance' }}
-                            </li>
-                            <li class="mb-3">
-                                <strong>Diagnostic:</strong> {{ user.diagnostic ? user.diagnostic.id : 'Aucun diagnostic' }}
+                                <strong>Séance :</strong>
+                                {{ user.seance ? user.seance.dateRealisation|date('d-m-Y') : 'Aucune séance' }}
                             </li>
                         </ul>
                     </div>
-                    <div class="card-footer text-center">
-                        <a href="{{ path('_logout_main') }}" class="btn btn-danger">Se déconnecter</a>
+                </div>
+
+                <!-- Activités associées -->
+                <div class="card shadow-lg mt-4">
+                    <div class="card-header bg-success text-white text-center">
+                        <h4>Activités</h4>
                     </div>
+                    <div class="card-body">
+                        {% if user.activites|length > 0 %}
+                            <ul class="list-group">
+                                {% for activite in user.activites %}
+                                    <li class="list-group-item">
+                                        <strong>{{ activite.nom }}</strong> - {{ activite.duree }} min
+                                        <p class="mb-0 text-muted">{{ activite.description }}</p>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted text-center">Aucune activité enregistrée.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Exercices associés -->
+                <div class="card shadow-lg mt-4">
+                    <div class="card-header bg-info text-white text-center">
+                        <h4>Exercices</h4>
+                    </div>
+                    <div class="card-body">
+                        {% set exercices = [] %}
+                        {% for activite in user.activites %}
+                            {% for exercice in activite.exercices %}
+                                {% if exercice not in exercices %}
+                                    {% set exercices = exercices|merge([exercice]) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+
+                        {% if exercices|length > 0 %}
+                            <ul class="list-group">
+                                {% for exercice in exercices %}
+                                    <li class="list-group-item">
+                                        <strong>{{ exercice.nom }}</strong>
+                                        <p class="mb-0 text-muted">{{ exercice.description }}</p>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted text-center">Aucun exercice enregistré.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bouton de déconnexion -->
+                <div class="text-center mt-4">
+                    <a href="{{ path('_logout_main') }}" class="btn btn-danger">Se déconnecter</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer-->
-    <footer class="bg-dark text-white text-center py-3">
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
         <p>© 2025 CesiZen - Tous droits réservés</p>
     </footer>
 {% endblock %}

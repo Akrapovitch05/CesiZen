@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 
 class UtilisateurCrudController extends AbstractCrudController
 {
@@ -26,19 +27,19 @@ class UtilisateurCrudController extends AbstractCrudController
             TextField::new('nom'),
             TextField::new('prenom'),
             EmailField::new('email'),
+            TextField::new('password'),
             ChoiceField::new('roles')
                 ->setChoices([
                     'Utilisateur' => 'ROLE_USER',
                     'Administrateur' => 'ROLE_ADMIN'
                 ])
                 ->allowMultipleChoices(),
-            AssociationField::new('seance')
-                ->setLabel('Séance')
-                ->formatValue(fn($value) => $value ? $value->getDateRealisation()->format('Y-m-d') : 'Aucune séance'),
+            DateTimeField::new('dateInscription')  // Champ en lecture seule pour afficher la date d'inscription
+            ->setFormTypeOptions(['disabled' => true]) // Empêche la modification
 
-            AssociationField::new('diagnostic')
-                ->setLabel('Diagnostic')
-                ->formatValue(fn($value) => $value ? $value->getId() : 'Aucun diagnostic'), // Affiche l'ID du diagnostic
+
+
+
         ];
     }
 
@@ -48,5 +49,6 @@ class UtilisateurCrudController extends AbstractCrudController
             ->setPageTitle(Crud::PAGE_INDEX, 'Gestion des utilisateurs')
             ->setPageTitle(Crud::PAGE_NEW, 'Ajouter un utilisateur')
             ->setPageTitle(Crud::PAGE_EDIT, 'Modifier un utilisateur');
+
     }
 }
