@@ -33,17 +33,18 @@
                     </li>
                     {% if is_granted('ROLE_ADMIN') %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('admin_dashboard') }}">Admin ({{ app.user.nom }})</a> <!-- Affiche "Admin" si l'utilisateur est un admin -->
+                            <a class="nav-link" href="{{ path('admin') }}">Admin ({{ app.user.nom }})</a> <!-- Affiche "Admin" si l'utilisateur est un admin -->
                         </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="">Se Déconnecter</a>
+                        <a class="nav-link" href="{{ path('_logout_main') }}">Se Déconnecter</a>
                     </li>
 
 
 
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{{ path('app_login') }}">Se Connecter</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ path('app_registration') }}">S'inscrire</a></li>
                 {% endif %}
             </ul>
         </div>

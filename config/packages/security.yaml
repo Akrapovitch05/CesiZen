@@ -51,6 +51,7 @@ security:
         - { path: ^/profile, roles: ROLE_USER }
 
 
+
     # Configuration de sécurité spécifique pour l'environnement de test
 when@test:
     security:

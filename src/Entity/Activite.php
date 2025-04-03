@@ -29,9 +29,9 @@ class Activite
     #[ORM\JoinColumn(nullable: false)]
     private ?FavoriActivite $favori = null;
 
-    public function getIdActivite(): ?int
+    public function getId(): ?int
     {
-        return $this->idActivite;
+        return $this->id;
     }
 
     public function getNom(): ?string

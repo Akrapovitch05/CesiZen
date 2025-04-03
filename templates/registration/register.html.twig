@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}S'inscrire{% endblock %}
+
+{% block body %}
+    <!-- Masthead-->
+    <header class="masthead">
+        <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
+            <div class="d-flex justify-content-center">
+                <div class="text-center">
+                    <h1 class="mx-auto my-0 text-uppercase">Inscription</h1>
+                    <h2 class="text-white-50 mx-auto mt-2 mb-5">Rejoignez notre plateforme pour améliorer votre bien-être</h2>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Registration Form -->
+    <section class="about-section text-center" id="about">
+        <div class="container px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-lg-8">
+                    <h2 class="text-white mb-4">Formulaire d'inscription</h2>
+                    {{ form_start(form, {'attr': {'class': 'bg-light p-4 rounded shadow'}}) }}
+                    <div class="form-group mb-3">
+                        {{ form_row(form.nom) }}
+                    </div>
+                    <div class="form-group mb-3">
+                        {{ form_row(form.prenom) }}
+                    </div>
+                    <div class="form-group mb-3">
+                        {{ form_row(form.email) }}
+                    </div>
+                    <div class="form-group mb-3">
+                        {{ form_row(form.password) }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">S'inscrire</button>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

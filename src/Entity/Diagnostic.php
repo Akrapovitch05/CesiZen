@@ -45,4 +45,9 @@ class Diagnostic
         $this->dateRealisation = $dateRealisation;
         return $this;
     }
+    public function __toString(): string
+    {
+        return $this->getDateRealisation()->format('Y-m-d'); // Ou un autre champ pertinent
+    }
+
 }

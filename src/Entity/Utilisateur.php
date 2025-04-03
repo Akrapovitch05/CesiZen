@@ -44,7 +44,7 @@ class Utilisateur implements UserInterface,\Symfony\Component\Security\Core\User
     #[ORM\Column(type: 'json')]
     private array $roles = []; // Modification : 'roles' est maintenant un tableau (array)
 
-    public function getIdUtilisateur(): ?int
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -98,7 +98,7 @@ class Utilisateur implements UserInterface,\Symfony\Component\Security\Core\User
         return $this->dateInscription;
     }
 
-    public function setDateInscription(\DateTimeInterface $dateInscription): static
+    public function setDateInscription(\DateTime $dateInscription): self
     {
         $this->dateInscription = $dateInscription;
         return $this;
@@ -166,4 +166,9 @@ class Utilisateur implements UserInterface,\Symfony\Component\Security\Core\User
         // TODO: Implement getUserIdentifier() method.
         return $this->email;
     }
+    public function __construct()
+    {
+        $this->dateInscription = new \DateTime(); // Date et heure actuelles lors de l'instanciation
+    }
+
 }

@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profil de {{ user.nom }}{% endblock %}
+
+{% block body %}
+    <!-- Masthead-->
+    <header class="masthead bg-primary text-white text-center">
+        <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
+            <div class="d-flex justify-content-center">
+                <div class="text-center">
+                    <h1 class="mx-auto my-0 text-uppercase">{{ user.nom }} {{ user.prenom }}</h1>
+                    <h2 class="text-white-50 mx-auto mt-2 mb-5">Bienvenue sur votre profil</h2>
+                    <a class="btn btn-light" href="{{ path('app_home') }}">Retourner au site</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Informations Personnelles</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <strong>Nom:</strong> {{ user.nom }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Prénom:</strong> {{ user.prenom }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Email:</strong> {{ user.email }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Date d'inscription:</strong> {{ user.dateInscription|date('d-m-Y') }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Rôle:</strong> {{ 'ROLE_ADMIN' in user.roles ? 'Administrateur' : 'Utilisateur' }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Séance:</strong> {{ user.seance ? user.seance.dateRealisation|date('d-m-Y') : 'Aucune séance' }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Diagnostic:</strong> {{ user.diagnostic ? user.diagnostic.id : 'Aucun diagnostic' }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center">
+                        <a href="{{ path('_logout_main') }}" class="btn btn-danger">Se déconnecter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer-->
+    <footer class="bg-dark text-white text-center py-3">
+        <p>© 2025 CesiZen - Tous droits réservés</p>
+    </footer>
+{% endblock %}

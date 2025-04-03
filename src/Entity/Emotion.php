@@ -22,9 +22,9 @@ class Emotion
     #[ORM\Column(length: 50)]
     private ?string $niveau2 = null;
 
-    public function getIdEmotion(): ?int
+    public function getId(): ?int
     {
-        return $this->idEmotion;
+        return $this->id;
     }
 
     public function getNom(): ?string

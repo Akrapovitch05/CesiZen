@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Controller\UtilisateurCrudController;
+namespace App\Controller\Admin;
 
-use App\Entity\Utilisateur;
+use App\Entity\Emotion;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
-class UtilisateurCrudController extends AbstractCrudController
+class EmotionCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return Utilisateur::class;
+        return Emotion::class;
     }
 
     /*
