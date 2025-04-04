@@ -2,11 +2,12 @@
 
 namespace App\Controller;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ExerciceRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-
+#[ApiResource]
 class ExerciceController extends AbstractController
 {
     #[Route('/exercices', name: 'app_exercices')]

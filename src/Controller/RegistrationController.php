@@ -3,6 +3,7 @@
 
 namespace App\Controller;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Entity\Seance;
 use App\Entity\Utilisateur;
 use App\Entity\Activite;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-
+#[ApiResource]
 class RegistrationController extends AbstractController
 {
     #[Route('/inscription', name: 'app_registration')]
@@ -53,7 +54,7 @@ class RegistrationController extends AbstractController
             $entityManager->flush();
 
             // Rediriger l'utilisateur vers la page d'accueil ou une autre page
-            return $this->redirectToRoute('app_home');
+            return $this->redirectToRoute('app_login');
         }
 
         return $this->render('registration/register.html.twig', [
