@@ -95,11 +95,14 @@
                 <label for="floatingPassword">Mot de passe</label>
             </div>
 
-            <div class="checkbox mb-3">
-                <label>
-                    <input type="checkbox" name="_remember_me" value="on"> Se souvenir de moi
-                </label>
-            </div>
+            {# Jeton CSRF exige par le firewall (enable_csrf). Sans lui, un
+               site tiers pourrait soumettre ce formulaire a la place du
+               visiteur. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            {# La case "Se souvenir de moi" a ete retiree : elle n'etait reliee
+               a aucun mecanisme, et un cookie de connexion persistant est un
+               risque reel sur poste partage pour une application de sante. #}
             <button class="w-100 btn btn-lg btn-primary" type="submit">Se connecter</button>
         </form>
     </main>

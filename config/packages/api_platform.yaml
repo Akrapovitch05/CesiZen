@@ -1,7 +1,21 @@
 api_platform:
-    title: Hello API Platform
+    title: CESIZen API
+    description: >
+        API de la plateforme CESIZen. Les ressources exposant des donnees
+        personnelles sont restreintes aux administrateurs authentifies ;
+        les catalogues publics (activites de detente, exercices de
+        respiration) sont accessibles en lecture seule.
     version: 1.0.0
+
     defaults:
-        stateless: true
+        # L'authentification de l'application repose sur la session Symfony.
+        # Avec stateless: true, API Platform interdit tout acces a la session
+        # et les controles is_granted() des ressources echouent en erreur 500
+        # au lieu de renvoyer un refus d'acces.
+        stateless: false
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']
+
+    # La documentation interactive reste disponible, mais elle ne doit exposer
+    # que les operations reellement declarees sur les entites.
+    show_webby: false

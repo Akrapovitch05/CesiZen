@@ -5,20 +5,55 @@ framework:
     http_method_override: false
     handle_all_throwables: true
 
-    # Enables session support. Note that the session will ONLY be started if you read or write from it.
-    # Remove or comment this section to explicitly disable session support.
     session:
         handler_id: null
+        # Le cookie de session n'est pas lisible en JavaScript : un XSS ne
+        # permet donc pas de voler la session.
+        cookie_httponly: true
+        # « auto » n'envoie le cookie en Secure que si la requete est en HTTPS,
+        # ce qui reste correct en developpement local sur HTTP.
         cookie_secure: auto
+        # Le cookie n'accompagne pas les requetes inter-sites, ce qui coupe la
+        # majorite des attaques CSRF.
         cookie_samesite: lax
+        # La protection contre la fixation de session (refus d'un identifiant
+        # non genere par le serveur) se regle au niveau de PHP et non de
+        # Symfony : voir session.use_strict_mode dans docker/php/php-prod.ini.
+        #
+        # Deconnexion automatique apres 1 h d'inactivite : l'application
+        # manipule des donnees de sante, une session ouverte sur un poste
+        # partage est un risque reel.
+        cookie_lifetime: 0
+        gc_maxlifetime: 3600
 
-    #esi: true
-    #fragments: true
     php_errors:
         log: true
+
+    # --- Limitation de debit -------------------------------------------------
+    # Contre-mesure aux attaques par force brute et a la creation de comptes
+    # en masse, explicitement demandees par le cahier des charges.
+    rate_limiter:
+        # Fenetre glissante : 5 inscriptions par heure et par adresse IP.
+        inscription:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '1 hour'
 
 when@test:
     framework:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        rate_limiter:
+            # Limites tres hautes en test : la suite enchaine les requetes et
+            # serait bloquee par les limites de production.
+            inscription:
+                policy: 'sliding_window'
+                limit: 1000
+                interval: '1 hour'
+
+when@prod:
+    framework:
+        session:
+            # En production, tout passe par HTTPS : le cookie est toujours Secure.
+            cookie_secure: true

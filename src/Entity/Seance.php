@@ -3,10 +3,25 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-#[ApiResource]
+// Une seance est rattachee a un utilisateur : jamais exposee anonymement.
+#[ApiResource(
+    operations: [
+        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+        new Post(security: "is_granted('ROLE_ADMIN')"),
+        new Put(security: "is_granted('ROLE_ADMIN')"),
+        new Delete(security: "is_granted('ROLE_ADMIN')"),
+    ],
+)]
 #[ORM\Entity]
 class Seance
 {
@@ -19,7 +34,7 @@ class Seance
     private \DateTimeInterface $dateRealisation;
 
     #[ORM\ManyToMany(targetEntity: Exercice::class, inversedBy: 'seances')]
-    #[ORM\JoinTable(name: 'Asso_5')]
+    #[ORM\JoinTable(name: 'seance_exercice')]
     private Collection $exercices;
 
     public function __construct()
