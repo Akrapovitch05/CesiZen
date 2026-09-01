@@ -1,0 +1,99 @@
+# ---------------------------------------------------------------------------
+# Synchronisation des libellés de tickets.
+#
+# Les libellés sont décrits dans .github/labels.json et appliqués au dépôt
+# par ce workflow : la configuration du ticketing est elle-même versionnée
+# et reproductible, et non cliquée à la main dans l'interface GitHub.
+#
+# Se déclenche à chaque modification du fichier, ou manuellement.
+# ---------------------------------------------------------------------------
+name: Synchronisation des libellés
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/labels.json'
+      - '.github/workflows/labels.yml'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  synchroniser:
+    name: Appliquer les libellés au dépôt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Création ou mise à jour des libellés
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const souhaites = JSON.parse(fs.readFileSync('.github/labels.json', 'utf8'));
+
+            const existants = await github.paginate(
+              github.rest.issues.listLabelsForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+            const parNom = new Map(existants.map(l => [l.name, l]));
+
+            let crees = 0, majs = 0, inchanges = 0;
+
+            for (const label of souhaites) {
+              const actuel = parNom.get(label.name);
+
+              if (!actuel) {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ...label
+                });
+                crees++;
+                core.info(`Créé : ${label.name}`);
+                continue;
+              }
+
+              // Mise à jour uniquement si la couleur ou la description diffère,
+              // pour éviter des appels d'API inutiles.
+              if (actuel.color !== label.color || (actuel.description || '') !== label.description) {
+                await github.rest.issues.updateLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  new_name: label.name,
+                  color: label.color,
+                  description: label.description
+                });
+                majs++;
+                core.info(`Mis à jour : ${label.name}`);
+              } else {
+                inchanges++;
+              }
+            }
+
+            // Les libellés hors référentiel ne sont pas supprimés : ils
+            // peuvent être portés par des tickets existants. Ils sont
+            // seulement signalés pour arbitrage manuel.
+            const noms = new Set(souhaites.map(l => l.name));
+            const orphelins = existants.filter(l => !noms.has(l.name)).map(l => l.name);
+
+            core.summary
+              .addHeading('Synchronisation des libellés', 2)
+              .addTable([
+                [{ data: 'Résultat', header: true }, { data: 'Nombre', header: true }],
+                ['Créés', String(crees)],
+                ['Mis à jour', String(majs)],
+                ['Inchangés', String(inchanges)]
+              ]);
+
+            if (orphelins.length) {
+              core.summary.addRaw(
+                `\n**Hors référentiel** (non supprimés automatiquement) : ${orphelins.join(', ')}\n`
+              );
+            }
+
+            await core.summary.write();

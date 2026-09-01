@@ -1,0 +1,211 @@
+# ---------------------------------------------------------------------------
+# Intégration continue CESIZen
+#
+# Déclenchée sur chaque push et chaque pull request vers develop et main.
+# Aucune fusion vers main n'est autorisée si l'un de ces contrôles échoue :
+# c'est la barrière de non-régression exigée par le cahier des charges
+# (« le non-succès d'un ou plusieurs tests de non régression fera
+# nécessairement l'objet d'un refus de livraison »).
+# ---------------------------------------------------------------------------
+name: Intégration continue
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  # Permet de relancer la chaîne à la demande depuis l'onglet Actions
+  # (utile pour la démonstration de soutenance).
+  workflow_dispatch:
+
+# Une nouvelle exécution annule la précédente sur la même branche :
+# évite d'empiler des exécutions inutiles sur les pushs successifs.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: '8.2'
+
+jobs:
+  # -------------------------------------------------------------------------
+  # 1. Qualité statique — ne nécessite aucune base de données, donc rapide.
+  #    Placé en premier pour renvoyer une erreur de syntaxe en moins d'une minute.
+  # -------------------------------------------------------------------------
+  qualite:
+    name: Qualité du code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Installation de PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_mysql, intl, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Cohérence de composer.json et composer.lock
+        run: composer validate --strict
+
+      - name: Cache des dépendances Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Installation des dépendances
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Syntaxe PHP de l'ensemble des sources
+        run: find src tests -name '*.php' -print0 | xargs -0 -n1 -P4 php -l
+
+      - name: Syntaxe des templates Twig
+        run: php bin/console lint:twig templates --env=test
+
+      - name: Syntaxe des fichiers de configuration YAML
+        run: php bin/console lint:yaml config --parse-tags --env=test
+
+      - name: Cohérence du conteneur d'injection de dépendances
+        run: php bin/console lint:container --env=test
+
+  # -------------------------------------------------------------------------
+  # 2. Sécurité des dépendances — alimente la veille technologique.
+  #    `composer audit` interroge la base d'avis de sécurité du FriendsOfPHP.
+  # -------------------------------------------------------------------------
+  securite:
+    name: Sécurité des dépendances
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Installation de PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Installation des dépendances
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Vulnérabilités connues des dépendances PHP
+        run: composer audit --format=plain
+
+      - name: Vulnérabilités connues des dépendances front
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Recherche de secrets versionnés par erreur
+        # Aucune valeur de secret réel ne doit apparaître dans un fichier suivi
+        # par Git : ce qui entre dans l'historique y reste, même après suppression.
+        #
+        # Exclusions justifiées :
+        #   .env.local.example  gabarit à clés vides
+        #   .env.test           valeur fixe conventionnelle de l'environnement de
+        #                       test, sans usage hors CI
+        #   .github             le présent contrôle et les identifiants de test
+        run: |
+          trouves=$(git grep -nIE '^[[:space:]]*(APP_SECRET|MYSQL_(ROOT_)?PASSWORD)=.+' \
+            -- ':!.env.local.example' ':!.env.test' ':!.github' \
+            | grep -vE '=[[:space:]]*(CHANGE_ME[A-Z_]*|""|'\'''\'')[[:space:]]*$' || true)
+
+          if [ -n "$trouves" ]; then
+            echo "$trouves"
+            echo "::error::Un secret semble versionné. Déplacez sa valeur dans .env.local et régénérez-la : celle-ci est désormais compromise."
+            exit 1
+          fi
+          echo "Aucun secret détecté dans les fichiers versionnés."
+
+  # -------------------------------------------------------------------------
+  # 3. Tests unitaires, fonctionnels et de non-régression.
+  #    Exécutés contre une vraie base MySQL 8, identique à la production.
+  # -------------------------------------------------------------------------
+  tests:
+    name: Tests automatisés
+    runs-on: ubuntu-latest
+    needs: [qualite]
+
+    services:
+      database:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: cesizen_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      APP_ENV: test
+      APP_SECRET: cle_de_test_sans_valeur_en_production
+      # Nom de base sans le suffixe "_test" : Doctrine l'ajoute lui-même en
+      # environnement de test (voir config/packages/doctrine.yaml). La base
+      # visée est donc "cesizen_test", celle créée par le service ci-dessus.
+      DATABASE_URL: "mysql://root:root@127.0.0.1:3306/cesizen?serverVersion=8.0.32&charset=utf8mb4"
+
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Installation de PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_mysql, intl, zip
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Cache des dépendances Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Installation des dépendances
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Création du schéma de base de test
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Exécution de la suite de tests
+        run: vendor/bin/phpunit --testdox
+
+  # -------------------------------------------------------------------------
+  # 4. Construction de l'image de production.
+  #    Vérifie que l'artefact livrable se construit réellement, avant toute
+  #    tentative de déploiement. Ne pousse rien : simple validation.
+  # -------------------------------------------------------------------------
+  image:
+    name: Construction de l'image de production
+    runs-on: ubuntu-latest
+    needs: [tests, securite]
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Préparation de Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construction de la cible « prod »
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: prod
+          push: false
+          tags: cesizen:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
