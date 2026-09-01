@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 
 # --------------------------- Étage 1 : base --------------------------------
-FROM php:8.2-fpm-alpine AS base
+FROM php:8.5-fpm-alpine AS base
 
 RUN apk add --no-cache git icu-dev libzip-dev oniguruma-dev bash \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql intl zip opcache \
