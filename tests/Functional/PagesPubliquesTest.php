@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Controller;
+namespace App\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * qu'aucune livraison ne casse l'accès aux pages ouvertes au public, ni
  * n'ouvre par erreur une page réservée.
  */
-final class HomePageControllerTest extends WebTestCase
+final class PagesPubliquesTest extends WebTestCase
 {
     /**
      * Pages accessibles sans authentification (visiteur anonyme).

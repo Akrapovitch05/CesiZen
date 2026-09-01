@@ -2,19 +2,12 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Activite;
-use App\Entity\Diagnostic;
-use App\Entity\Emotion;
-use App\Entity\Exercice;
-use App\Entity\Seance;
-use App\Entity\Utilisateur;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Config\UserMenu;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
@@ -34,12 +27,12 @@ class DashboardController extends AbstractDashboardController
     public function configureMenuItems(): iterable
     {
         yield MenuItem::linkToRoute('Retourner au site', 'fa fa-home', 'app_home');
-        yield MenuItem::linkToDashboard('Tableau de bord', 'fa fa-home');
-        yield MenuItem::linkToCrud('Utilisateurs', 'fa fa-users', Utilisateur::class);
-        yield MenuItem::linkToCrud('Activités', 'fa fa-running', Activite::class);
-        yield MenuItem::linkToCrud('Exercices', 'fa fa-dumbbell', Exercice::class);
+        yield MenuItem::linkToDashboard('Tableau de bord', 'fa fa-gauge');
 
-        yield MenuItem::linkToCrud('Séances', 'fa fa-calendar', Seance::class);
+        // linkTo() attend le contrôleur CRUD, non l'entité : linkToCrud()
+        // est déprécié depuis EasyAdmin 4.29.
+        yield MenuItem::linkTo(UtilisateurCrudController::class, 'Utilisateurs', 'fa fa-users');
+        yield MenuItem::linkTo(ActiviteCrudController::class, 'Activités', 'fa fa-running');
 
 
     }

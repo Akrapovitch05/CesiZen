@@ -1,5 +1,10 @@
 when@dev: &dev
-    # See full configuration: https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#full-default-bundle-configuration
+    # Documentation : https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html
     zenstruck_foundry:
+        persistence:
+            # Regroupe les ecritures en un seul flush par test : comportement
+            # impose en Foundry 3, active des maintenant pour eviter une
+            # rupture lors de la montee de version.
+            flush_once: true
 
 when@test: *dev
