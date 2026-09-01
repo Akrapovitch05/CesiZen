@@ -1,0 +1,86 @@
+name: "Demande d'évolution"
+description: "Nouvelle fonctionnalité ou modification d'un comportement existant."
+title: "[EVOLUTION] "
+labels: ["evolution", "etape:declare"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Toute demande d'évolution donne lieu à une proposition de prestation
+        comportant : analyse du besoin, délai de mise en œuvre, impact sur la
+        documentation et estimation de charge. Les sections ci-dessous sont
+        renseignées par le demandeur ; le chiffrage est complété ensuite par
+        le prestataire.
+
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Besoin exprimé
+      description: Le besoin métier, formulé sans présumer de la solution technique.
+    validations:
+      required: true
+
+  - type: textarea
+    id: valeur
+    attributes:
+      label: Bénéfice attendu
+      description: Ce que cela apporte aux utilisateurs ou au Ministère. Sert à la priorisation.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module concerné
+      options:
+        - "Comptes utilisateurs"
+        - "Informations"
+        - "Exercices de respiration"
+        - "Activités de détente"
+        - "Back-office d'administration"
+        - "API"
+        - "Nouveau module"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priorite
+    attributes:
+      label: Priorité souhaitée par le demandeur
+      options:
+        - "Haute — bloque un usage réel"
+        - "Moyenne — améliore nettement l'usage"
+        - "Basse — confort"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptation
+    attributes:
+      label: Critères d'acceptation
+      description: Conditions vérifiables permettant de valider la livraison.
+      value: |
+        - [ ] Étant donné ..., quand ..., alors ...
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: rgpd
+    attributes:
+      label: Impact sur les données personnelles
+      description: L'évolution collecte-t-elle, modifie-t-elle ou expose-t-elle des données personnelles ? Si oui, une analyse d'impact est requise avant développement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: chiffrage
+    attributes:
+      label: "Chiffrage (réservé au prestataire)"
+      value: |
+        - **Analyse du besoin** :
+        - **Charge estimée** : ... jours-homme
+        - **Coût estimé** : ... €
+        - **Délai de mise en œuvre** :
+        - **Impact documentaire** :
+        - **Version cible** :

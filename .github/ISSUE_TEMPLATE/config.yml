@@ -1,0 +1,10 @@
+# Seuls les quatre formulaires du projet sont proposés : aucun ticket vide,
+# donc aucun ticket non qualifiable.
+blank_issues_enabled: false
+contact_links:
+  - name: Faille de sécurité exploitable et non publique
+    url: https://github.com/Akrapovitch05/CesiZen/security/advisories/new
+    about: "Ne créez pas de ticket public. Passez par un avis de sécurité privé, visible des seuls mainteneurs."
+  - name: Méthodologie de gestion des tickets
+    url: https://github.com/Akrapovitch05/CesiZen/blob/main/docs/maintenance.md
+    about: "Cycle de vie d'un ticket, niveaux de gravité et délais applicables."
