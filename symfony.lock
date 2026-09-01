@@ -1,17 +1,26 @@
 {
-    "api-platform/core": {
-        "version": "4.1",
+    "api-platform/symfony": {
+        "version": "4.3",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
             "version": "4.0",
-            "ref": "cb9e6b8ceb9b62f32d41fc8ad72a25d5bd674c6d"
+            "ref": "e9952e9f393c2d048f10a78f272cd35e807d972b"
         },
         "files": [
-            "./config/packages/api_platform.yaml",
-            "./config/routes/api_platform.yaml",
-            "./src/ApiResource/.gitignore"
+            "config/packages/api_platform.yaml",
+            "config/routes/api_platform.yaml",
+            "src/ApiResource/.gitignore"
         ]
+    },
+    "doctrine/deprecations": {
+        "version": "1.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "fdd756167454623e21f1d769c5b814b243782a67"
+        }
     },
     "doctrine/doctrine-bundle": {
         "version": "2.14",
