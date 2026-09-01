@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- https://phpunit.readthedocs.io/en/latest/configuration.html -->
+<!--
+    Configuration des tests automatises CESIZen.
+
+    Les suites correspondent aux trois niveaux exiges par le cahier des
+    charges. L'ensemble constitue la suite de non-regression, rejouee
+    integralement avant chaque fusion et chaque livraison : l'echec d'un
+    seul test entraine le refus de livraison.
+
+    Executer une suite ciblee avec l option testsuite de PHPUnit,
+    par exemple la suite nommee "unitaires".
+-->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          backupGlobals="false"
@@ -18,8 +28,14 @@
     </php>
 
     <testsuites>
-        <testsuite name="Project Test Suite">
-            <directory>tests</directory>
+        <!-- Composants isoles : aucune base de donnees, execution immediate. -->
+        <testsuite name="unitaires">
+            <directory>tests/Unit</directory>
+        </testsuite>
+
+        <!-- Parcours complets a travers le noyau HTTP et la base de donnees. -->
+        <testsuite name="fonctionnels">
+            <directory>tests/Functional</directory>
         </testsuite>
     </testsuites>
 
@@ -27,6 +43,10 @@
         <include>
             <directory suffix=".php">src</directory>
         </include>
+        <exclude>
+            <directory>src/DataFixtures</directory>
+            <file>src/Kernel.php</file>
+        </exclude>
     </coverage>
 
     <listeners>

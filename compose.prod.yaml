@@ -1,0 +1,48 @@
+# ---------------------------------------------------------------------------
+# Environnement de PRODUCTION (simulé localement pour la soutenance).
+# Objectif : image immuable, aucun code monté en volume, aucun outil de debug,
+# base non exposée, redémarrage automatique et limites de ressources.
+# ---------------------------------------------------------------------------
+services:
+  database:
+    restart: unless-stopped
+    # Aucun port publié : la base n'est joignable que par le réseau interne.
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  php:
+    build:
+      target: prod
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: 0
+    # Pas de volume : le code livré est celui figé dans l'image, donc
+    # exactement celui qui a été testé par la CI.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  nginx:
+    # En production, nginx embarque public/ dans son image plutôt que de le
+    # recevoir par volume : rien n'est monté depuis l'hôte, et les fichiers
+    # statiques servis proviennent du même build que le code exécuté.
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: web
+    image: cesizen-web
+    restart: unless-stopped
+    volumes: []
+    ports:
+      - "8081:80"
+    deploy:
+      resources:
+        limits:
+          memory: 256M

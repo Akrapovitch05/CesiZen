@@ -1,6 +1,11 @@
 monolog:
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        # Canal dedie aux evenements de securite : connexions, echecs
+        # d'authentification, limites de debit atteintes, creations de compte.
+        # Isole des logs applicatifs, il constitue la piste d'audit exigee
+        # par le plan de securisation et exploitable en cas d'incident.
+        - securite
 
 when@dev:
     monolog:
@@ -60,3 +65,13 @@ when@prod:
                 channels: [deprecation]
                 path: php://stderr
                 formatter: monolog.formatter.json
+            # Les evenements de securite sont ecrits sans filtrage
+            # fingers_crossed : ils doivent apparaitre meme sans erreur
+            # associee, sinon la piste d'audit est incomplete.
+            securite:
+                type: stream
+                channels: [securite]
+                path: php://stderr
+                level: info
+                formatter: monolog.formatter.json
+

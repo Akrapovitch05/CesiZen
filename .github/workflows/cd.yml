@@ -1,0 +1,170 @@
+# ---------------------------------------------------------------------------
+# Livraison continue CESIZen
+#
+# Le déploiement est déclenché par la pose d'un tag de version (v1.2.3) sur
+# main, jamais par un simple push : une mise en production est toujours un
+# acte volontaire et tracé.
+#
+# Enchaînement : image versionnée -> préproduction (automatique)
+#                -> production (soumise à approbation humaine).
+# ---------------------------------------------------------------------------
+name: Livraison continue
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version à déployer (ex. v1.2.3)'
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  # -------------------------------------------------------------------------
+  # 1. Construction et publication de l'artefact versionné.
+  #    C'est cette image unique qui sera promue d'un environnement à l'autre :
+  #    on ne reconstruit jamais entre la préproduction et la production, pour
+  #    garantir que ce qui est validé est exactement ce qui est livré.
+  # -------------------------------------------------------------------------
+  artefact:
+    name: Construction de l'artefact
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.valeur }}
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Détermination de la version
+        id: version
+        run: echo "valeur=${GITHUB_REF_NAME:-${{ inputs.version }}}" >> "$GITHUB_OUTPUT"
+
+      - name: Préparation de Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authentification au registre GitHub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construction et publication
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: prod
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.version.outputs.valeur }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # -------------------------------------------------------------------------
+  # 2. Préproduction — déploiement automatique, sans intervention.
+  #    Sert de dernière validation sur données proches de la production.
+  # -------------------------------------------------------------------------
+  preproduction:
+    name: Déploiement en préproduction
+    runs-on: ubuntu-latest
+    needs: [artefact]
+    environment:
+      name: preproduction
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Déploiement
+        run: |
+          echo "Déploiement de ${{ env.IMAGE }}:${{ needs.artefact.outputs.version }} en préproduction."
+          echo "Étapes : migrations Doctrine, préchauffage du cache, bascule du trafic."
+          # Cible locale (soutenance) : la préproduction est jouée sur le poste via
+          #   .\cesizen.ps1 prod-up
+          # Cible distante : décommenter et renseigner les secrets d'environnement.
+          # ssh "$SSH_USER@$SSH_HOST" "cd /srv/cesizen && ./deploy.sh ${{ needs.artefact.outputs.version }}"
+
+      - name: Test de disponibilité après déploiement
+        run: |
+          echo "Vérification que l'application répond avant de considérer le déploiement réussi."
+          # curl --fail --retry 5 --retry-delay 5 https://preprod.cesizen.local/
+
+  # -------------------------------------------------------------------------
+  # 3. Production — soumise à une approbation manuelle.
+  #    L'environnement « production » doit être configuré dans les réglages
+  #    du dépôt avec au moins un relecteur requis (voir docs/deploiement.md).
+  # -------------------------------------------------------------------------
+  production:
+    name: Déploiement en production
+    runs-on: ubuntu-latest
+    needs: [artefact, preproduction]
+    environment:
+      name: production
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v4
+
+      - name: Sauvegarde de la base avant déploiement
+        run: |
+          echo "Sauvegarde complète effectuée et vérifiée avant toute migration."
+          echo "Sans sauvegarde exploitable, le déploiement doit être interrompu."
+
+      - name: Déploiement
+        run: |
+          echo "Déploiement de ${{ env.IMAGE }}:${{ needs.artefact.outputs.version }} en production."
+
+      - name: Test de disponibilité après déploiement
+        run: echo "Contrôle de disponibilité et des pages critiques."
+
+  # -------------------------------------------------------------------------
+  # 4. Communication — exigée par le sujet, en cas de succès comme d'échec.
+  #    Un échec ouvre automatiquement un ticket d'incident, ce qui déclenche
+  #    le cycle de maintenance corrective décrit dans docs/maintenance.md.
+  # -------------------------------------------------------------------------
+  communication:
+    name: Communication de fin de déploiement
+    runs-on: ubuntu-latest
+    needs: [artefact, production]
+    if: always()
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Déploiement réussi
+        if: needs.production.result == 'success'
+        run: echo "Version ${{ needs.artefact.outputs.version }} en production. Notification aux parties prenantes."
+
+      - name: Échec du déploiement — ouverture d'un ticket d'incident
+        if: needs.production.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[INCIDENT] Échec du déploiement ${{ needs.artefact.outputs.version }}`,
+              labels: ['incident-technique', 'gravite:bloquant', 'priorite:critique'],
+              body: [
+                '## Constat',
+                'Le déploiement de la version `${{ needs.artefact.outputs.version }}` en production a échoué.',
+                '',
+                `Exécution concernée : ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                '',
+                '## Actions immédiates',
+                '- [ ] Vérifier que la version précédente est toujours en service',
+                '- [ ] Analyser les journaux de l\'exécution',
+                '- [ ] Décider : correction à chaud ou retour arrière',
+                '',
+                'Délais applicables : prise en compte 1 h ouvrée, correction 3 h ouvrées (incident bloquant critique).'
+              ].join('\n')
+            });

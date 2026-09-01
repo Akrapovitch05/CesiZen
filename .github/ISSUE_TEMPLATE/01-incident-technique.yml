@@ -1,0 +1,81 @@
+name: "Incident technique"
+description: "Panne, indisponibilité ou dysfonctionnement de l'infrastructure ou de l'application."
+title: "[INCIDENT] "
+labels: ["incident-technique", "etape:declare"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Délais contractuels (heures ouvrées)**
+
+        | Gravité | Prise en compte et diagnostic | Correction |
+        |---|---|---|
+        | Bloquant, priorité critique | 1 h | 3 h |
+        | Bloquant, priorité forte | 2 h | 6 h |
+        | Majeur | 7 h | 16 h |
+        | Mineur (par lots) | 1 jour | 40 h |
+
+  - type: dropdown
+    id: gravite
+    attributes:
+      label: Gravité
+      description: |
+        **Bloquant** : service inutilisable, aucun contournement possible.
+        **Majeur** : service inopérant par intermittence, ou utilisable via un contournement.
+        **Mineur** : qualité de service dégradée, service opérationnel.
+      options:
+        - "Bloquant — aucun contournement"
+        - "Majeur — contournement existant"
+        - "Mineur — service opérationnel"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environnement
+    attributes:
+      label: Environnement concerné
+      options: [Production, Préproduction, Test, Développement]
+    validations:
+      required: true
+
+  - type: textarea
+    id: constat
+    attributes:
+      label: Constat
+      description: Ce qui est observé, et depuis quand.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      description: Suite d'actions permettant de reproduire l'incident. Indispensable à la qualification.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Comportement attendu
+    validations:
+      required: true
+
+  - type: input
+    id: impact
+    attributes:
+      label: Périmètre d'impact
+      placeholder: "ex. tous les utilisateurs connectés / seulement le back-office"
+    validations:
+      required: true
+
+  - type: textarea
+    id: journaux
+    attributes:
+      label: Journaux et messages d'erreur
+      description: Extraits de var/log ou de la console. Retirez toute donnée personnelle avant de coller.
+      render: text

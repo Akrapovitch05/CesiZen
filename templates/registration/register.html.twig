@@ -32,7 +32,10 @@
                         {{ form_row(form.email) }}
                     </div>
                     <div class="form-group mb-3">
-                        {{ form_row(form.password) }}
+                        {{ form_row(form.plainPassword.first) }}
+                    </div>
+                    <div class="form-group mb-3">
+                        {{ form_row(form.plainPassword.second) }}
                     </div>
                     {{ form_end(form) }}
                 </div>

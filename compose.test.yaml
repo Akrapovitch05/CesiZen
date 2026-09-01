@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# Environnement de TEST / intégration continue.
+# Objectif : exécution reproductible et jetable de la suite de tests.
+# Base de données en tmpfs (mémoire vive) : rapide et détruite à l'arrêt,
+# aucune donnée de test ne persiste d'une exécution à l'autre.
+# Aucun port n'est publié : l'environnement est isolé du poste.
+# ---------------------------------------------------------------------------
+services:
+  database:
+    environment:
+      MYSQL_DATABASE: cesizen_test
+    tmpfs:
+      - /var/lib/mysql
+    volumes: []
+
+  php:
+    build:
+      target: test
+    environment:
+      APP_ENV: test
+      APP_DEBUG: 0
+      # Le nom de base est volontairement "cesizen" et non "cesizen_test" :
+      # config/packages/doctrine.yaml ajoute le suffixe "_test" en environnement
+      # de test. La base réellement utilisée est donc bien "cesizen_test",
+      # celle que crée le conteneur MySQL ci-dessus.
+      DATABASE_URL: mysql://${MYSQL_USER:-cesizen}:${MYSQL_PASSWORD}@database:3306/cesizen?serverVersion=8.0.32&charset=utf8mb4
+      MAILER_DSN: null://null
+
+  nginx:
+    profiles:
+      - manuel   # nginx inutile pour la suite de tests : non démarré par défaut

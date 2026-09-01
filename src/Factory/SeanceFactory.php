@@ -3,12 +3,19 @@
 namespace App\Factory;
 
 use App\Entity\Seance;
-use Zenstruck\Foundry\ModelFactory;
+use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
-/** @extends ModelFactory<Seance> */
-final class SeanceFactory extends ModelFactory
+/**
+ * @extends PersistentProxyObjectFactory<Seance>
+ */
+final class SeanceFactory extends PersistentProxyObjectFactory
 {
-    protected function getDefaults(): array
+    public static function class(): string
+    {
+        return Seance::class;
+    }
+
+    protected function defaults(): array|callable
     {
         return [
             'dateRealisation' => self::faker()->dateTimeBetween('-1 year', 'now'),

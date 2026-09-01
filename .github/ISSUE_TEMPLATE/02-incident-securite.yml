@@ -1,0 +1,81 @@
+name: "Incident de sécurité"
+description: "Faille, intrusion, fuite de données ou comportement suspect. Traitement prioritaire."
+title: "[SECURITE] "
+labels: ["incident-securite", "etape:declare", "priorite:critique"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **Avant de continuer**
+        >
+        > CESIZen manipule des données de santé mentale, donc des données
+        > sensibles au sens du RGPD.
+        >
+        > - Ne collez **aucune donnée personnelle réelle** dans ce ticket.
+        > - En cas de fuite avérée de données personnelles, le délai de
+        >   notification à la CNIL est de **72 heures** à compter de la
+        >   prise de connaissance : prévenez immédiatement le référent
+        >   sécurité sans attendre la fin de l'analyse.
+        > - Si la faille est exploitable et non encore publique, utilisez
+        >   l'avis de sécurité privé plutôt que ce formulaire public.
+
+  - type: dropdown
+    id: nature
+    attributes:
+      label: Nature de l'incident
+      options:
+        - "Fuite ou accès non autorisé à des données personnelles"
+        - "Vol ou compromission d'identifiants"
+        - "Tentative d'intrusion ou force brute"
+        - "Hameçonnage visant les utilisateurs"
+        - "Vulnérabilité applicative (injection, XSS, CSRF, contrôle d'accès)"
+        - "Vulnérabilité d'une dépendance"
+        - "Autre"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: donnees
+    attributes:
+      label: Des données personnelles sont-elles concernées ?
+      description: Détermine le déclenchement de la procédure de notification CNIL.
+      options:
+        - "Oui, de façon avérée"
+        - "Possiblement, à confirmer"
+        - "Non"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: niveau
+    attributes:
+      label: Niveau d'escalade proposé
+      description: Voir docs/securite.md pour le détail des niveaux.
+      options:
+        - "N1 — Traitement par l'équipe de développement"
+        - "N2 — Référent sécurité mobilisé"
+        - "N3 — Cellule de crise, direction et DPO"
+    validations:
+      required: true
+
+  - type: textarea
+    id: constat
+    attributes:
+      label: Constat
+      description: Ce qui a été observé, quand, et comment cela a été découvert.
+    validations:
+      required: true
+
+  - type: textarea
+    id: perimetre
+    attributes:
+      label: Périmètre estimé
+      description: Comptes, tables ou volumes de données potentiellement touchés.
+    validations:
+      required: true
+
+  - type: textarea
+    id: immediat
+    attributes:
+      label: Mesures conservatoires déjà prises
+      placeholder: "ex. compte suspendu, adresse IP bloquée, service isolé"

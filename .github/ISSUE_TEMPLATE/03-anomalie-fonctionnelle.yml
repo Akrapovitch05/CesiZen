@@ -1,0 +1,64 @@
+name: "Anomalie fonctionnelle"
+description: "L'application fonctionne, mais son comportement diffère des spécifications."
+title: "[ANOMALIE] "
+labels: ["anomalie-fonctionnelle", "etape:declare"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module concerné
+      options:
+        - "Comptes utilisateurs"
+        - "Informations"
+        - "Exercices de respiration"
+        - "Activités de détente"
+        - "Back-office d'administration"
+        - "API"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: acteur
+    attributes:
+      label: Profil concerné
+      options: ["Visiteur anonyme", "Utilisateur connecté", "Administrateur"]
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: constate
+    attributes:
+      label: Comportement constaté
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Comportement attendu
+      description: Référencez si possible la règle de gestion ou la spécification concernée.
+    validations:
+      required: true
+
+  - type: input
+    id: contournement
+    attributes:
+      label: Contournement possible
+      placeholder: "Aucun, ou décrivez-le"
+
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Contexte technique
+      placeholder: "Navigateur, appareil, résolution, environnement"

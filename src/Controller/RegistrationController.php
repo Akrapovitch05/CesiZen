@@ -3,57 +3,79 @@
 
 namespace App\Controller;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Entity\Seance;
 use App\Entity\Utilisateur;
-use App\Entity\Activite;
 use App\Form\RegistrationType;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-#[ApiResource]
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\Routing\Annotation\Route;
+
 class RegistrationController extends AbstractController
 {
-    #[Route('/inscription', name: 'app_registration')]
-    public function register(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
-    {
-        $user = new Utilisateur();
-        $form = $this->createForm(RegistrationType::class, $user);
-
+    #[Route('/inscription', name: 'app_registration', methods: ['GET', 'POST'])]
+    public function register(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher,
+        LoggerInterface $securiteLogger,
+        RateLimiterFactory $inscriptionLimiter,
+    ): Response {
+        $utilisateur = new Utilisateur();
+        $form = $this->createForm(RegistrationType::class, $utilisateur);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Encoder le mot de passe avec UserPasswordHasherInterface
-            $hashedPassword = $passwordHasher->hashPassword($user, $user->getPassword());
-            $user->setPassword($hashedPassword);
-            // Ajouter la date d'inscription (par défaut, date du jour)
-            $user->setDateInscription(new \DateTime());
-            // Ajouter un rôle par défaut (ROLE_USER)
-            $user->setRoles(['ROLE_USER']);
+            // Limite la creation de comptes en masse depuis une meme adresse,
+            // qui servirait a saturer la base ou a tester des adresses volees.
+            $limite = $inscriptionLimiter->create($request->getClientIp());
+            if (!$limite->consume()->isAccepted()) {
+                $securiteLogger->warning('Inscription : limite de debit atteinte', [
+                    'ip' => $request->getClientIp(),
+                ]);
 
-            // Assigner une séance par défaut à l'utilisateur (si elle existe)
-            $defaultSeance = $entityManager->getRepository(Seance::class)->find(1);
-            if (!$defaultSeance) {
-                throw new \Exception("Aucune séance par défaut trouvée ! Ajoutez-en une dans la base.");
-            }
-            $user->setSeance($defaultSeance);
+                $this->addFlash('error', 'Trop de tentatives d\'inscription. Réessayez dans quelques minutes.');
 
-            // Assigner des activités par défaut à l'utilisateur
-            $activite1 = $entityManager->getRepository(Activite::class)->find(1); // ID d'une activité par défaut
-            if ($activite1) {
-                $user->addActivite($activite1);
-            } else {
-                throw new \Exception("Aucune activité par défaut trouvée ! Ajoutez-en une dans la base.");
+                return $this->render('registration/register.html.twig', [
+                    'form' => $form->createView(),
+                ]);
             }
 
-            // Sauvegarder l'utilisateur
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $utilisateur
+                ->setPassword($passwordHasher->hashPassword($utilisateur, (string) $utilisateur->getPlainPassword()))
+                ->setDateInscription(new \DateTime())
+                // Un compte cree publiquement n'obtient jamais autre chose que
+                // ROLE_USER : l'elevation de privileges passe par le back-office.
+                ->setRoles(['ROLE_USER']);
 
-            // Rediriger l'utilisateur vers la page d'accueil ou une autre page
+            // Le mot de passe en clair ne doit pas survivre au hachage.
+            $utilisateur->eraseCredentials();
+
+            try {
+                $entityManager->persist($utilisateur);
+                $entityManager->flush();
+            } catch (UniqueConstraintViolationException) {
+                // Deux inscriptions simultanees sur la meme adresse peuvent
+                // passer la validation applicative ; la contrainte en base
+                // reste le dernier rempart.
+                $this->addFlash('error', 'Un compte existe déjà avec cette adresse électronique.');
+
+                return $this->render('registration/register.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            $securiteLogger->info('Compte cree', [
+                'utilisateur' => $utilisateur->getUserIdentifier(),
+                'ip' => $request->getClientIp(),
+            ]);
+
+            $this->addFlash('success', 'Votre compte a bien été créé. Vous pouvez vous connecter.');
+
             return $this->redirectToRoute('app_login');
         }
 
