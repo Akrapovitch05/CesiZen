@@ -1,0 +1,28 @@
+# Normalisation des fins de ligne.
+# Le dépôt stocke toujours des LF ; Git restitue la convention locale au
+# checkout. Les fichiers consommés par Linux (Makefile, Dockerfile, scripts,
+# configuration nginx) sont forcés en LF : des CRLF y provoqueraient des
+# erreurs d'exécution difficiles à diagnostiquer dans les conteneurs.
+* text=auto eol=lf
+
+Makefile        text eol=lf
+*.sh            text eol=lf
+docker/**       text eol=lf
+*.yaml          text eol=lf
+*.yml           text eol=lf
+*.php           text eol=lf
+*.twig          text eol=lf
+
+# Scripts destinés à Windows : CRLF assumé.
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+
+# Fichiers binaires : aucune conversion.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.woff          binary
+*.woff2         binary
+*.pdf           binary

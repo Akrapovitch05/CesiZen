@@ -23,3 +23,18 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+###> projet cesizen ###
+# Dépendances front installées via npm : jamais versionnées
+/node_modules/
+# Configuration locale de l'IDE, propre à chaque poste
+/.idea/
+/.vscode/
+# Surcharges locales d'environnement (contiennent les secrets réels)
+/.env.local
+/.env.*.local
+# Artefacts de build et rapports générés
+/tools/vendor/
+/var/error-screenshots/
+*.log
+###< projet cesizen ###
