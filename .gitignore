@@ -38,3 +38,15 @@
 /var/error-screenshots/
 *.log
 ###< projet cesizen ###
+
+###> images du site ###
+# Les images sont des sources du projet, pas un resultat de build : la recette
+# AssetMapper les avait exclues du depot, si bien qu'un clone donnait un site
+# sans logo ni illustrations. On les remet sous versionnage.
+!/public/assets/
+/public/assets/*
+!/public/assets/img/
+!/public/assets/favicon.ico
+# La video de demonstration pese 67 Mo et n'est referencee dans aucun template.
+/public/assets/videos/
+###< images du site ###
