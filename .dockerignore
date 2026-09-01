@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+node_modules
+vendor
+var
+docs
+public/assets
+public/bundles
+.env.local
+.env.*.local
+*.md
+tools/vendor

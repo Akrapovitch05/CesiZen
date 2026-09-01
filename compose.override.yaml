@@ -1,18 +1,42 @@
-
+# ---------------------------------------------------------------------------
+# Environnement de DÉVELOPPEMENT (chargé automatiquement par `docker compose up`)
+# Objectif : boucle de retour courte. Code monté en volume, debug actif,
+# base et mails exposés sur le poste du développeur.
+# ---------------------------------------------------------------------------
 services:
-###> doctrine/doctrine-bundle ###
   database:
     ports:
-      - "5432"
-###< doctrine/doctrine-bundle ###
+      - "3307:3306"   # 3307 pour ne pas entrer en conflit avec MySQL d'AMPPS
 
-###> symfony/mailer ###
+  php:
+    build:
+      target: dev
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 1
+      MAILER_DSN: smtp://mailer:1025
+    volumes:
+      # Le code est monté : une modification est visible sans reconstruire.
+      - .:/var/www/html:rw
+      # Le vendor de l'image prime sur celui de l'hôte (évite les soucis
+      # de dépendances compilées entre Windows et Linux).
+      - /var/www/html/vendor
+      # var/ reste interne au conteneur. Monté depuis Windows, le cache
+      # Symfony devient inexploitable : droits POSIX absents et suppression
+      # de répertoire impossible côté Linux. Consulter les journaux via
+      # `docker compose logs php`.
+      - /var/www/html/var
+
+  nginx:
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/var/www/html/public:ro
+
   mailer:
     image: axllent/mailpit
     ports:
-      - "1025"
-      - "8025"
+      - "8025:8025"   # interface web de consultation des mails
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
-###< symfony/mailer ###
