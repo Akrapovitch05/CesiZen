@@ -5,7 +5,10 @@ node_modules
 vendor
 var
 docs
-public/assets
+# Les images du site doivent entrer dans l'image : sans elles, la production
+# s'affiche sans logo ni illustrations. Seule la video, non referencee et
+# lourde de 67 Mo, reste exclue.
+public/assets/videos
 public/bundles
 .env.local
 .env.*.local
