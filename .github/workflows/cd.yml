@@ -109,12 +109,12 @@ jobs:
       # à la machine de construction et serait inexploitable sur la cible.
       - name: Compression de l'archive
         run: |
-          tar -czf deploy.tar.gz \
+          tar -czf /tmp/deploy.tar.gz \
             --exclude=./.git \
             --exclude=./var \
             --exclude=./.env.local \
-            --exclude=./deploy.tar.gz \
             .
+          mv /tmp/deploy.tar.gz deploy.tar.gz
 
       - name: Conservation de l'archive
         uses: actions/upload-artifact@v4
