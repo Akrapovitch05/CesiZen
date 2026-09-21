@@ -62,6 +62,6 @@ USER www-data
 # front controller : sans lui, toute requête aboutit à un 404 de PHP-FPM.
 # Construire les deux images depuis le même Dockerfile garantit que les
 # assets servis correspondent exactement au code exécuté.
-FROM nginx:1.27-alpine AS web
+FROM nginx:1.31-alpine AS web
 COPY --from=prod /var/www/html/public /var/www/html/public
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
