@@ -85,6 +85,16 @@ Un échec à n'importe quelle étape bloque la fusion.
 5. Test de disponibilité
 6. Recette fonctionnelle par le Ministère
 
+### Alimenter un environnement de démonstration
+
+L'image de production est construite sans les dépendances de développement, donc sans le bundle de fixtures Doctrine. Pour peupler une préproduction ou une production simulée, on charge le jeu de données SQL versionné :
+
+```bash
+docker compose --env-file .env.local -f compose.yaml -f compose.prod.yaml -p cesizen-prod exec -T database mysql -ucesizen -pMOT_DE_PASSE cesizen < docker/donnees-demonstration.sql
+```
+
+Le fichier remet les tables à zéro avant d'insérer : il peut être rejoué sans erreur de doublon. Il crée deux comptes dont les mots de passe figurent dans le dépôt, donc publics — d'où la ligne « comptes de démonstration supprimés » dans les contrôles à réaliser avant une mise en production réelle.
+
 ### Production — après approbation manuelle
 1. **Sauvegarde complète de la base, vérifiée.** Sans sauvegarde exploitable, le déploiement est interrompu.
 2. Promotion de **l'image déjà validée en préproduction**. Aucune reconstruction : l'artefact livré est bit à bit celui qui a été recetté.

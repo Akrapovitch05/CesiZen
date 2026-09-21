@@ -5,8 +5,11 @@
 # main, jamais par un simple push : une mise en production est toujours un
 # acte volontaire et tracé.
 #
-# Enchaînement : image versionnée -> préproduction (automatique)
+# Enchaînement : artefact versionné, construit une seule fois
 #                -> production (soumise à approbation humaine).
+#
+# L'artefact n'est jamais reconstruit entre sa fabrication et sa mise en
+# service : ce qui est validé est exactement ce qui est livré.
 # ---------------------------------------------------------------------------
 name: Livraison continue
 
@@ -26,14 +29,18 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   # -------------------------------------------------------------------------
-  # 1. Construction et publication de l'artefact versionné.
-  #    C'est cette image unique qui sera promue d'un environnement à l'autre :
-  #    on ne reconstruit jamais entre la préproduction et la production, pour
-  #    garantir que ce qui est validé est exactement ce qui est livré.
+  # 1. Construction des artefacts versionnés.
+  #
+  #    Deux formats, pour deux usages :
+  #    - l'image Docker garantit la reproductibilité des environnements de
+  #      test et sert de référence d'exécution ;
+  #    - l'archive de déploiement est la forme adaptée à la cible réelle,
+  #      un hébergement mutualisé qui n'exécute pas de conteneurs.
+  #
+  #    Les deux sont produits une seule fois, à partir du même code source.
   # -------------------------------------------------------------------------
   artefact:
     name: Construction de l'artefact
@@ -48,6 +55,10 @@ jobs:
         id: version
         run: echo "valeur=${GITHUB_REF_NAME:-${{ inputs.version }}}" >> "$GITHUB_OUTPUT"
 
+      - name: Normalisation du nom d'image
+        id: image
+        run: echo "nom=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Préparation de Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -58,7 +69,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Construction et publication
+      - name: Construction et publication de l'image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -66,68 +77,121 @@ jobs:
           target: prod
           push: true
           tags: |
-            ${{ env.IMAGE }}:${{ steps.version.outputs.valeur }}
-            ${{ env.IMAGE }}:latest
+            ${{ steps.image.outputs.nom }}:${{ steps.version.outputs.valeur }}
+            ${{ steps.image.outputs.nom }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # -------------------------------------------------------------------------
-  # 2. Préproduction — déploiement automatique, sans intervention.
-  #    Sert de dernière validation sur données proches de la production.
-  # -------------------------------------------------------------------------
-  preproduction:
-    name: Déploiement en préproduction
-    runs-on: ubuntu-latest
-    needs: [artefact]
-    environment:
-      name: preproduction
-    steps:
-      - name: Récupération des sources
-        uses: actions/checkout@v4
+      # Même version de PHP que la cible de déploiement : construire avec une
+      # version différente de celle qui exécute est une source classique de
+      # défaut découvert seulement en production.
+      - name: Préparation de PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
 
-      - name: Déploiement
+      # --no-dev exclut les outils de test et de débogage ; APP_ENV=prod est
+      # indispensable, sans lui Symfony cherche à charger des bundles de
+      # développement qui viennent d'être désinstallés.
+      - name: Installation des dépendances de production
+        run: composer install --no-dev --optimize-autoloader --prefer-dist --no-progress
+        env:
+          APP_ENV: prod
+
+      - name: Préparation des fichiers front
         run: |
-          echo "Déploiement de ${{ env.IMAGE }}:${{ needs.artefact.outputs.version }} en préproduction."
-          echo "Étapes : migrations Doctrine, préchauffage du cache, bascule du trafic."
-          # Cible locale (soutenance) : la préproduction est jouée sur le poste via
-          #   .\cesizen.ps1 prod-up
-          # Cible distante : décommenter et renseigner les secrets d'environnement.
-          # ssh "$SSH_USER@$SSH_HOST" "cd /srv/cesizen && ./deploy.sh ${{ needs.artefact.outputs.version }}"
+          php bin/console importmap:install
+          php bin/console asset-map:compile
+        env:
+          APP_ENV: prod
 
-      - name: Test de disponibilité après déploiement
+      # var/ est exclu : le cache Symfony contient des chemins absolus propres
+      # à la machine de construction et serait inexploitable sur la cible.
+      - name: Compression de l'archive
         run: |
-          echo "Vérification que l'application répond avant de considérer le déploiement réussi."
-          # curl --fail --retry 5 --retry-delay 5 https://preprod.cesizen.local/
+          tar -czf /tmp/deploy.tar.gz \
+            --exclude=./.git \
+            --exclude=./var \
+            --exclude=./.env.local \
+            .
+          mv /tmp/deploy.tar.gz deploy.tar.gz
+
+      - name: Conservation de l'archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-${{ steps.version.outputs.valeur }}
+          path: deploy.tar.gz
+          retention-days: 30
 
   # -------------------------------------------------------------------------
-  # 3. Production — soumise à une approbation manuelle.
-  #    L'environnement « production » doit être configuré dans les réglages
-  #    du dépôt avec au moins un relecteur requis (voir docs/deploiement.md).
+  # 2. Production — soumise à une approbation manuelle.
+  #
+  #    L'environnement « production » est configuré dans les réglages du dépôt
+  #    avec au moins un relecteur requis : le job démarre puis attend une
+  #    validation humaine avant d'exécuter la moindre commande sur la cible.
+  #
+  #    La sauvegarde précède les migrations : un déploiement de code s'annule
+  #    en redéployant la version précédente, une donnée supprimée ne se
+  #    récupère pas.
   # -------------------------------------------------------------------------
   production:
     name: Déploiement en production
     runs-on: ubuntu-latest
-    needs: [artefact, preproduction]
+    needs: [artefact]
     environment:
       name: production
+      url: https://cesizen.akramkibout.fr
     steps:
-      - name: Récupération des sources
-        uses: actions/checkout@v4
+      - name: Récupération de l'archive
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-${{ needs.artefact.outputs.version }}
 
-      - name: Sauvegarde de la base avant déploiement
+      # La clé privée provient des secrets du dépôt : elle n'apparaît jamais
+      # dans le code et reste masquée dans les journaux d'exécution.
+      # ssh-keyscan enregistre l'empreinte du serveur, sans quoi SSH
+      # attendrait une confirmation interactive impossible à donner ici.
+      - name: Préparation de la clé SSH
         run: |
-          echo "Sauvegarde complète effectuée et vérifiée avant toute migration."
-          echo "Sans sauvegarde exploitable, le déploiement doit être interrompu."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Déploiement
+      - name: Sauvegarde de la base avant migration
         run: |
-          echo "Déploiement de ${{ env.IMAGE }}:${{ needs.artefact.outputs.version }} en production."
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+          mkdir -p ~/backups-cesizen &&
+          mariadb-dump kiak9632_cesizen | gzip > ~/backups-cesizen/prod-$(date +%Y%m%d-%H%M%S).sql.gz &&
+          ls -lh ~/backups-cesizen | tail -3
+          '
 
-      - name: Test de disponibilité après déploiement
-        run: echo "Contrôle de disponibilité et des pages critiques."
+      - name: Transfert de l'archive
+        run: scp -i ~/.ssh/deploy_key deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/
+
+      # Les commandes sont chaînées par && : si l'une échoue, les suivantes ne
+      # sont pas exécutées. Une migration ne part jamais sur une extraction
+      # incomplète.
+      - name: Mise en service
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            cd ${{ secrets.DEPLOY_PATH }} &&
+            tar -xzf ~/deploy.tar.gz &&
+            mkdir -p var/cache var/log &&
+            rm -rf var/cache/* &&
+            php bin/console doctrine:migrations:migrate --no-interaction &&
+            php bin/console cache:clear --env=prod &&
+            php bin/console cache:warmup --env=prod &&
+            rm ~/deploy.tar.gz
+          '
+
+      # Un déploiement n'est réussi que si l'application répond réellement.
+      # En cas d'échec, le job « communication » ouvre un ticket d'incident.
+      - name: Contrôle de disponibilité
+        run: curl --fail --retry 5 --retry-delay 5 https://cesizen.akramkibout.fr/
 
   # -------------------------------------------------------------------------
-  # 4. Communication — exigée par le sujet, en cas de succès comme d'échec.
+  # 3. Communication — en cas de succès comme d'échec.
   #    Un échec ouvre automatiquement un ticket d'incident, ce qui déclenche
   #    le cycle de maintenance corrective décrit dans docs/maintenance.md.
   # -------------------------------------------------------------------------
