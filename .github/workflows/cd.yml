@@ -156,7 +156,10 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts || {
+            echo "::error::Connexion SSH refusée par l'hébergeur : l'adresse IP de l'exécuteur n'est pas dans la liste blanche."
+            exit 1
+          }
 
       - name: Sauvegarde de la base avant migration
         run: |
