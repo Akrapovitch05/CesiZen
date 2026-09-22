@@ -213,7 +213,7 @@ jobs:
 
       - name: Échec du déploiement — ouverture d'un ticket d'incident
         if: needs.production.result == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.issues.create({
