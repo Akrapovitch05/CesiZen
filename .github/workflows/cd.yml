@@ -49,7 +49,7 @@ jobs:
       version: ${{ steps.version.outputs.valeur }}
     steps:
       - name: Récupération des sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Détermination de la version
         id: version
